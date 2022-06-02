@@ -1,0 +1,7 @@
+ARG_ENABLE('pdo_taosw', 'pdo_taosw support', 'no');
+
+if (PHP_PDO_TAOSW != 'no') {
+	AC_DEFINE('HAVE_PDO_TAOSW', 1, 'pdo_taosw support enabled');
+
+	EXTENSION('pdo_taosw', 'pdo_taosw.c', null, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1');
+}
