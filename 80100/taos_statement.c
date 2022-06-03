@@ -531,7 +531,7 @@ static int pdo_taosw_stmt_cursor_closer(pdo_stmt_t *stmt)
     return 1;
 }
 
-const struct pdo_stmt_methods taos_stmt_methods = {
+const struct pdo_stmt_methods taosw_stmt_methods = {
     pdo_taosw_stmt_dtor,             /* free the statement handle */
     pdo_taosw_stmt_execute,          /* start the query */
     pdo_taosw_stmt_fetch,            /* next row */

@@ -118,7 +118,7 @@ taos_handle_preparer(pdo_dbh_t *dbh, const char *sql, size_t sql_len, pdo_stmt_t
 
     S->H = H;
     stmt->driver_data = S;
-    stmt->methods = &taos_stmt_methods;
+    stmt->methods = &taosw_stmt_methods;
 
     stmt->supports_placeholders = PDO_PLACEHOLDER_POSITIONAL;
     ret = pdo_parse_params(stmt, (char *) sql, sql_len, &nsql, &nsql_len);
@@ -406,7 +406,7 @@ static int pdo_taosw_handle_factory(pdo_dbh_t *dbh, zval *driver_options) /* {{{
 
     ret = 1;
 
-    cleanup:
+cleanup:
     for (i = 0; i < sizeof(vars) / sizeof(vars[0]); i++) {
         if (vars[i].freeme) {
             efree(vars[i].optval);
@@ -424,7 +424,7 @@ static int pdo_taosw_handle_factory(pdo_dbh_t *dbh, zval *driver_options) /* {{{
 /* }}} */
 
 const pdo_driver_t pdo_taosw_driver = {
-    PDO_DRIVER_HEADER(taos),
+    PDO_DRIVER_HEADER(taosw),
     pdo_taosw_handle_factory
 };
 

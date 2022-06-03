@@ -114,7 +114,7 @@ taos_handle_preparer(pdo_dbh_t *dbh, zend_string *sql, pdo_stmt_t *stmt, zval *d
 
     S->H = H;
     stmt->driver_data = S;
-    stmt->methods = &taos_stmt_methods;
+    stmt->methods = &taosw_stmt_methods;
 
     stmt->supports_placeholders = PDO_PLACEHOLDER_POSITIONAL;
     ret = pdo_parse_params(stmt, sql, &nsql);
@@ -421,7 +421,7 @@ cleanup:
 
 
 const pdo_driver_t pdo_taosw_driver = {
-    PDO_DRIVER_HEADER(taos),
+    PDO_DRIVER_HEADER(taosw),
     pdo_taosw_handle_factory
 };
 

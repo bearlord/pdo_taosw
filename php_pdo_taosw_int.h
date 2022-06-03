@@ -63,10 +63,10 @@ typedef struct {
 
 #if PHP_VERSION_ID < 70300
 extern pdo_driver_t pdo_taosw_driver;
-extern struct pdo_stmt_methods taos_stmt_methods;
+extern struct pdo_stmt_methods taosw_stmt_methods;
 #else
 extern const pdo_driver_t pdo_taosw_driver;
-extern const struct pdo_stmt_methods taos_stmt_methods;
+extern const struct pdo_stmt_methods taosw_stmt_methods;
 #endif
 
 extern int
