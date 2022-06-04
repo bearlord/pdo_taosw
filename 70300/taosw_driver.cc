@@ -14,6 +14,7 @@
 #include "php_pdo_taosw.h"
 #include "php_pdo_taosw_int.h"
 #include "zend_exceptions.h"
+#include "swoole_coroutine.h"
 
 /* {{{ */
 int _pdo_taosw_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, int errcode, const char *sqlstate, const char *msg, const char *file, int line)
@@ -21,7 +22,6 @@ int _pdo_taosw_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, int errcode, const char *
     pdo_taosw_db_handle *H = (pdo_taosw_db_handle *) dbh->driver_data;
     pdo_error_type *pdo_err = stmt ? &stmt->error_code : &dbh->error_code;
     pdo_taosw_error_info *einfo = &H->einfo;
-    char *errmsg;
     pdo_taosw_stmt *S = NULL;
 
     if (stmt) {
@@ -108,12 +108,10 @@ static int
 taos_handle_preparer(pdo_dbh_t *dbh, const char *sql, size_t sql_len, pdo_stmt_t *stmt, zval *driver_options)
 {
     pdo_taosw_db_handle *H = (pdo_taosw_db_handle *) dbh->driver_data;
-    pdo_taosw_stmt *S = ecalloc(1, sizeof(pdo_taosw_stmt));
+    pdo_taosw_stmt *S = (pdo_taosw_stmt*) ecalloc(1, sizeof(pdo_taosw_stmt));
     int ret;
     char *nsql = NULL;
     size_t nsql_len = 0;
-    int emulate = 0;
-    int execute_only = 0;
     int num_params = 0;
 
     S->H = H;
@@ -154,9 +152,9 @@ taos_handle_preparer(pdo_dbh_t *dbh, const char *sql, size_t sql_len, pdo_stmt_t
     S->num_params = num_params;
     if (S->num_params) {
         S->params_given = 0;
-        S->params = ecalloc(S->num_params, sizeof(TAOS_BIND));
-        S->in_null = ecalloc(S->num_params, sizeof(zend_bool));
-        S->in_length = ecalloc(S->num_params, sizeof(zend_ulong));
+        S->params = (TAOS_BIND *) ecalloc(S->num_params, sizeof(TAOS_BIND));
+        S->in_null = (int *) ecalloc(S->num_params, sizeof(zend_bool));
+        S->in_length = (zend_ulong *)ecalloc(S->num_params, sizeof(zend_ulong));
     }
 
     dbh->alloc_own_columns = 1;
@@ -204,7 +202,7 @@ taos_handle_quoter(pdo_dbh_t *dbh, const char *unquoted, size_t unquotedlen, cha
 
     if (!unquotedlen) {
         *quotedlen = 2;
-        *quoted = emalloc(*quotedlen + 1);
+        *quoted = (char *) emalloc(*quotedlen + 1);
         strcpy(*quoted, "''");
         return 1;
     }
@@ -212,8 +210,8 @@ taos_handle_quoter(pdo_dbh_t *dbh, const char *unquoted, size_t unquotedlen, cha
     /* count single quotes */
     for (cu = unquoted; (cu = strchr(cu, '\'')); qcount++, cu++); /* empty loop */
 
-    *quotedlen = unquotedlen + qcount + 2;
-    *quoted = c = emalloc(*quotedlen + 1);
+    *quotedlen = (size_t) (unquotedlen + qcount + 2);
+    *quoted = c = (char *) emalloc(*quotedlen + 1);
     *c++ = '\'';
 
     /* foreach (chunk that ends in a quote) */
@@ -342,6 +340,7 @@ static const struct pdo_dbh_methods taos_methods = {
 /* {{{ pdo_taosw_handle_factory */
 static int pdo_taosw_handle_factory(pdo_dbh_t *dbh, zval *driver_options) /* {{{ */
 {
+    return 1;
     pdo_taosw_db_handle *H;
     size_t i;
     int ret = 0;
@@ -350,7 +349,9 @@ static int pdo_taosw_handle_factory(pdo_dbh_t *dbh, zval *driver_options) /* {{{
     char *charset = NULL;
     char *timezone = NULL;
     uint16_t port = 6030;
+    /*
     zend_long connect_timeout = 30;
+    */
 
     struct pdo_data_src_parser vars[] = {
             {"dbname",   "",          0},
@@ -364,15 +365,17 @@ static int pdo_taosw_handle_factory(pdo_dbh_t *dbh, zval *driver_options) /* {{{
 
     php_pdo_parse_data_source(dbh->data_source, dbh->data_source_len, vars, 7);
 
-    H = pecalloc(1, sizeof(pdo_taosw_db_handle), dbh->is_persistent);
+    H = (pdo_taosw_db_handle *) pecalloc(1, sizeof(pdo_taosw_db_handle), dbh->is_persistent);
     dbh->driver_data = H;
 
     H->einfo.errcode = 0;
     H->einfo.errmsg = NULL;
 
+    /*
     if (driver_options) {
         connect_timeout = pdo_attr_lval(driver_options, PDO_ATTR_TIMEOUT, 30);
     }
+    */
 
     dbname = vars[0].optval;
     host = vars[1].optval;
@@ -390,12 +393,33 @@ static int pdo_taosw_handle_factory(pdo_dbh_t *dbh, zval *driver_options) /* {{{
     }
 
     taos_init();
+    /*
+    swoole::coroutine::async([&]() {
+        H->server = taos_connect(host, dbh->username, dbh->password, dbname, port);
+
+        if (H->server == NULL) {
+            zend_throw_exception_ex(NULL, 0, "SQLSTATE[%s] [%s] %s", "HY000", "0x000B", "Unable to establish connection");
+//            goto cleanup;
+            for (i = 0; i < sizeof(vars) / sizeof(vars[0]); i++) {
+                if (vars[i].freeme) {
+                    efree(vars[i].optval);
+                }
+            }
+            dbh->methods = &taos_methods;
+            if (!ret) {
+                taos_handle_closer(dbh);
+            }
+        }
+    });
+    */
+
     H->server = taos_connect(host, dbh->username, dbh->password, dbname, port);
 
     if (H->server == NULL) {
         zend_throw_exception_ex(NULL, 0, "SQLSTATE[%s] [%s] %s", "HY000", "0x000B", "Unable to establish connection");
-        goto cleanup;
+//        goto cleanup;
     }
+
     taos_inited = 1;
 
     H->attached = 1;
@@ -406,25 +430,14 @@ static int pdo_taosw_handle_factory(pdo_dbh_t *dbh, zval *driver_options) /* {{{
 
     ret = 1;
 
-cleanup:
-    for (i = 0; i < sizeof(vars) / sizeof(vars[0]); i++) {
-        if (vars[i].freeme) {
-            efree(vars[i].optval);
-        }
-    }
-
-    dbh->methods = &taos_methods;
-    if (!ret) {
-        taos_handle_closer(dbh);
-    }
-
     return ret;
 }
 
 /* }}} */
 
-const pdo_driver_t pdo_taosw_driver = {
-    PDO_DRIVER_HEADER(taosw),
-    pdo_taosw_handle_factory
-};
-
+namespace {
+    pdo_driver_t pdo_taosw_driver = {
+            PDO_DRIVER_HEADER(taosw),
+            pdo_taosw_handle_factory
+    };
+}

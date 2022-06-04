@@ -55,6 +55,11 @@ if test "$PHP_PDO_TAOSW" != "no"; then
     -L$TAOS_DIR/$TAOS_LIBDIR -lm
   ])
 
+  PHP_ADD_LIBRARY(stdc++, 1, PDO_TAOSW_SHARED_LIBADD)
+  CFLAGS="-Wall -pthread $CFLAGS"
+  LDFLAGS="$LDFLAGS -lpthread"
+  PHP_ADD_LIBRARY(pthread, 1, PDO_TAOSW_SHARED_LIBADD)
+
   AC_MSG_RESULT(-L$TAOS_DIR/$TAOS_LIBDIR -lm)
 
   PHP_CHECK_PDO_INCLUDES
@@ -65,6 +70,13 @@ if test "$PHP_PDO_TAOSW" != "no"; then
 
   PHP_ADD_INCLUDE($TAOS_DIR/include)
 
-  PHP_NEW_EXTENSION(pdo_taosw, pdo_taosw.c taosw_driver.c taosw_statement.c, $ext_shared,, -I$pdo_cv_inc_path -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1 -DZEND_SIGNALS)
+  PHP_ADD_INCLUDE([$phpincludedir/ext/swoole])
+  PHP_ADD_INCLUDE([$phpincludedir/ext/swoole/include])
+  PHP_ADD_EXTENSION_DEP(pdo_taosw, swoole)
+
+  PHP_NEW_EXTENSION(pdo_taosw, pdo_taosw.cc taosw_driver.cc taosw_statement.cc, $ext_shared,, -I$pdo_cv_inc_path, cxx)
   PHP_ADD_EXTENSION_DEP(pdo_taosw, pdo)
+
+  PHP_REQUIRE_CXX()
+  CXXFLAGS="$CXXFLAGS -Wall -Wno-unused-function -Wno-deprecated -Wno-deprecated-declarations -std=c++11"
 fi

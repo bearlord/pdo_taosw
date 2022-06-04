@@ -19,11 +19,8 @@
 
 static int pdo_pdo_taosw_stmt_execute_prepared(pdo_stmt_t *stmt) /* {{{ */
 {
-    pdo_taosw_stmt *S = stmt->driver_data;
-    pdo_taosw_db_handle *H = S->H;
-    TAOS_RES *result;
+    pdo_taosw_stmt *S = (pdo_taosw_stmt *) stmt->driver_data;
     int insert;
-    zend_long row_count;
     int i;
 
     if (S->params) {
@@ -62,9 +59,9 @@ static int pdo_pdo_taosw_stmt_execute_prepared(pdo_stmt_t *stmt) /* {{{ */
                 efree(S->out_null);
                 efree(S->out_length);
             }
-            S->bound_result = ecalloc(stmt->column_count, sizeof(TAOS_BIND));
-            S->out_null = ecalloc(stmt->column_count, sizeof(zend_bool));
-            S->out_length = ecalloc(stmt->column_count, sizeof(zend_ulong));
+            S->bound_result = (TAOS_BIND *) ecalloc(stmt->column_count, sizeof(TAOS_BIND));
+            S->out_null = (int *) ecalloc(stmt->column_count, sizeof(zend_bool));
+            S->out_length = (zend_ulong *) ecalloc(stmt->column_count, sizeof(zend_ulong));
 
             /* summon memory to hold the row */
             for (i = 0; i < stmt->column_count; i++) {
@@ -88,7 +85,6 @@ static int pdo_pdo_taosw_stmt_execute_prepared(pdo_stmt_t *stmt) /* {{{ */
 static int pdo_taosw_stmt_dtor(pdo_stmt_t *stmt)
 {
     pdo_taosw_stmt *S = (pdo_taosw_stmt *) stmt->driver_data;
-    pdo_taosw_db_handle *H = S->H;
 
     if (S->result) {
         /* free the resource */
@@ -320,8 +316,6 @@ static int pdo_taosw_stmt_param_hook(pdo_stmt_t *stmt, struct pdo_bound_param_da
 static int pdo_taosw_stmt_fetch(pdo_stmt_t *stmt, enum pdo_fetch_orientation ori, long offset)
 {
     pdo_taosw_stmt *S = (pdo_taosw_stmt *) stmt->driver_data;
-    pdo_taosw_db_handle *H = S->H;
-    TAOS_RES *result;
 
     if (!S->stmt) {
         return 0;
@@ -471,18 +465,18 @@ static int pdo_taosw_stmt_get_col(pdo_stmt_t *stmt, int colno, char **ptr, unsig
                 tp = localtime(&tt);
                 strftime(time_str, 64, "%Y-%m-%d %H:%M:%S", tp);
                 if (precision == TSDB_TIME_PRECISION_MILLI) {
-                    sprintf(time_value, "%s.%03ld", time_str, (int32_t)(*((int64_t *) row[colno]) % 1000));
+                    sprintf(time_value, "%s.%03ld", time_str, (int64_t)(*((int64_t *) row[colno]) % 1000));
                 } else if (precision == TSDB_TIME_PRECISION_MICRO) {
-                    sprintf(time_value, "%s.%06ld", time_str, (int32_t)(*((int64_t *) row[colno]) % 1000000));
+                    sprintf(time_value, "%s.%06ld", time_str, (int64_t)(*((int64_t *) row[colno]) % 1000000));
                 } else {
-                    sprintf(time_value, "%s.%09ld", time_str, (int32_t)(*((int64_t *) row[colno]) % 1000000000));
+                    sprintf(time_value, "%s.%09ld", time_str, (int64_t)(*((int64_t *) row[colno]) % 1000000000));
                 }
                 *ptr = time_value;
                 *len = strlen(time_value);
             }
                 break;
             case TSDB_DATA_TYPE_UBIGINT:
-                sprintf(value, "%"PRIu64, *((uint64_t *) row[colno]));
+                sprintf(value, "%" PRIu64, *((uint64_t *) row[colno]));
                 *ptr = value;
                 *len = strlen(value);
                 break;
@@ -507,7 +501,7 @@ static int pdo_taosw_stmt_get_col(pdo_stmt_t *stmt, int colno, char **ptr, unsig
         return 1;
     }
 
-    *ptr = S->current_data[colno];
+    *ptr = (char *) S->current_data[colno];
     *len = S->current_lengths[colno];
 
     return 1;
@@ -516,7 +510,6 @@ static int pdo_taosw_stmt_get_col(pdo_stmt_t *stmt, int colno, char **ptr, unsig
 static int pdo_taosw_stmt_get_column_meta(pdo_stmt_t *stmt, long colno, zval *return_value)
 {
     pdo_taosw_stmt *S = (pdo_taosw_stmt *) stmt->driver_data;
-    const TAOS_FIELD *F;
     zval flags;
 
 
