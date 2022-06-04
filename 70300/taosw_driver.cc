@@ -435,9 +435,7 @@ static int pdo_taosw_handle_factory(pdo_dbh_t *dbh, zval *driver_options) /* {{{
 
 /* }}} */
 
-namespace {
-    pdo_driver_t pdo_taosw_driver = {
-            PDO_DRIVER_HEADER(taosw),
-            pdo_taosw_handle_factory
-    };
-}
+const pdo_driver_t pdo_taosw_driver = {
+        PDO_DRIVER_HEADER(taosw),
+        pdo_taosw_handle_factory
+};
