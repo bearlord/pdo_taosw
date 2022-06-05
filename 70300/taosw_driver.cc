@@ -158,27 +158,21 @@ static zend_long taos_handle_doer(pdo_dbh_t *dbh, const char *sql, size_t sql_le
     zend_long ret = 1;
     int errno;
 
-    printf("====1\n");
-//    if (swoole::Coroutine::get_current())
-//    {
-//        swoole::coroutine::async([&]() {
-//            res = taos_query(H->server, sql);
-//            errno = taos_errno(res);
-//            if (errno != 0) {
-//                pdo_taosw_error_msg(dbh, pdo_taosw_convert_errno(errno), taos_errstr(res));
-//                return -1;
-//            }
-//
-//            int c = taos_affected_rows(res);
-//            if (c == -1) {
-//                pdo_taosw_error_msg(dbh, pdo_taosw_convert_errno(errno), taos_errstr(res));
-//                return -1;
-//            }
-//
-//            ret = Z_L(0);
-//            taos_free_result(res);
-//        });
-//    }
+    res = taos_query(H->server, sql);
+    errno = taos_errno(res);
+    if (errno != 0) {
+        pdo_taosw_error_msg(dbh, pdo_taosw_convert_errno(errno), taos_errstr(res));
+        return -1;
+    }
+
+    int c = taos_affected_rows(res);
+    if (c == -1) {
+        pdo_taosw_error_msg(dbh, pdo_taosw_convert_errno(errno), taos_errstr(res));
+        return -1;
+    }
+
+    ret = Z_L(0);
+    taos_free_result(res);
 
     return ret;
 }
@@ -345,9 +339,9 @@ static int pdo_taosw_handle_factory(pdo_dbh_t *dbh, zval *driver_options) /* {{{
     */
 
     struct pdo_data_src_parser vars[] = {
-            {"dbname",   "",          0},
-            {"host",     "localhost", 0},
-            {"port",     "6030",      0},
+            {"dbname",   (char *)"",          0},
+            {"host",     (char *)"localhost", 0},
+            {"port",     (char *)"6030",      0},
             {"user",     NULL,        0},
             {"password", NULL,        0},
             {"charset",  NULL,        0},
