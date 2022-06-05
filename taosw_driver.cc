@@ -2,18 +2,21 @@
 #include "config.h"
 #endif
 
-#include "php.h"
-#include "php_ini.h"
-#include "ext/standard/info.h"
-#include "ext/standard/php_string.h"
-#include "main/php_network.h"
-#include "pdo/php_pdo.h"
-#include "pdo/php_pdo_driver.h"
-#include "pdo/php_pdo_error.h"
-#include "ext/standard/file.h"
-#include "php_pdo_taosw.h"
-#include "php_pdo_taosw_int.h"
-#include "zend_exceptions.h"
+extern "C" {
+    #include "php.h"
+    #include "php_ini.h"
+    #include "ext/standard/info.h"
+    #include "ext/standard/php_string.h"
+    #include "main/php_network.h"
+    #include "pdo/php_pdo.h"
+    #include "pdo/php_pdo_driver.h"
+    #include "pdo/php_pdo_error.h"
+    #include "ext/standard/file.h"
+    #include "php_pdo_taosw.h"
+    #include "php_pdo_taosw_int.h"
+    #include "zend_exceptions.h"
+}
+#include "swoole_coroutine.h"
 
 #if PHP_VERSION_ID >= 80100
 #include "80100/taosw_driver.cc"

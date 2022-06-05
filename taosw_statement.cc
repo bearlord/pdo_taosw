@@ -2,14 +2,17 @@
 #include "config.h"
 #endif
 
-#include "php.h"
-#include "php_ini.h"
-#include "ext/standard/info.h"
-#include "pdo/php_pdo.h"
-#include "pdo/php_pdo_driver.h"
-#include "php_pdo_taosw.h"
-#include "php_pdo_taosw_int.h"
-#include "ttype.h"
+extern "C" {
+    #include "php.h"
+    #include "php_ini.h"
+    #include "ext/standard/info.h"
+    #include "pdo/php_pdo.h"
+    #include "pdo/php_pdo_driver.h"
+    #include "php_pdo_taosw.h"
+    #include "php_pdo_taosw_int.h"
+    #include "ttype.h"
+}
+#include "swoole_coroutine.h"
 
 #if HAVE_NETINET_IN_H
 #include <netinet/in.h>

@@ -2,15 +2,6 @@
 #include "config.h"
 #endif
 
-#include "php.h"
-#include "php_ini.h"
-#include "ext/standard/info.h"
-#include "pdo/php_pdo.h"
-#include "pdo/php_pdo_driver.h"
-#include "php_pdo_taosw.h"
-#include "php_pdo_taosw_int.h"
-#include "ttype.h"
-
 #if HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
@@ -142,6 +133,18 @@ static int pdo_taosw_stmt_execute(pdo_stmt_t *stmt)
         taos_free_result(S->result);
         S->result = NULL;
     }
+
+//    if (swoole::Coroutine::get_current())
+//    {
+        printf("====1\n");
+//        swoole::coroutine::async([&]() {
+//            S->result = taos_query(H->server, stmt->active_query_string);
+//
+//            stmt->row_count = (zend_long) taos_affected_rows(S->result);
+//            stmt->column_count = (int) taos_num_fields(S->result);
+//            S->fields = taos_fetch_fields(S->result);
+//        });
+//    }
 
     S->result = taos_query(H->server, stmt->active_query_string);
 

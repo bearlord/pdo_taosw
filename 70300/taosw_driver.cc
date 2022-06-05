@@ -2,20 +2,6 @@
 #include "config.h"
 #endif
 
-#include "php.h"
-#include "php_ini.h"
-#include "ext/standard/info.h"
-#include "ext/standard/php_string.h"
-#include "main/php_network.h"
-#include "pdo/php_pdo.h"
-#include "pdo/php_pdo_driver.h"
-#include "pdo/php_pdo_error.h"
-#include "ext/standard/file.h"
-#include "php_pdo_taosw.h"
-#include "php_pdo_taosw_int.h"
-#include "zend_exceptions.h"
-#include "swoole_coroutine.h"
-
 /* {{{ */
 int _pdo_taosw_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, int errcode, const char *sqlstate, const char *msg, const char *file, int line)
 {
@@ -172,21 +158,27 @@ static zend_long taos_handle_doer(pdo_dbh_t *dbh, const char *sql, size_t sql_le
     zend_long ret = 1;
     int errno;
 
-    res = taos_query(H->server, sql);
-    errno = taos_errno(res);
-    if (errno != 0) {
-        pdo_taosw_error_msg(dbh, pdo_taosw_convert_errno(errno), taos_errstr(res));
-        return -1;
-    }
-
-    int c = taos_affected_rows(res);
-    if (c == -1) {
-        pdo_taosw_error_msg(dbh, pdo_taosw_convert_errno(errno), taos_errstr(res));
-        return -1;
-    }
-
-    ret = Z_L(0);
-    taos_free_result(res);
+    printf("====1\n");
+//    if (swoole::Coroutine::get_current())
+//    {
+//        swoole::coroutine::async([&]() {
+//            res = taos_query(H->server, sql);
+//            errno = taos_errno(res);
+//            if (errno != 0) {
+//                pdo_taosw_error_msg(dbh, pdo_taosw_convert_errno(errno), taos_errstr(res));
+//                return -1;
+//            }
+//
+//            int c = taos_affected_rows(res);
+//            if (c == -1) {
+//                pdo_taosw_error_msg(dbh, pdo_taosw_convert_errno(errno), taos_errstr(res));
+//                return -1;
+//            }
+//
+//            ret = Z_L(0);
+//            taos_free_result(res);
+//        });
+//    }
 
     return ret;
 }
@@ -340,7 +332,6 @@ static const struct pdo_dbh_methods taos_methods = {
 /* {{{ pdo_taosw_handle_factory */
 static int pdo_taosw_handle_factory(pdo_dbh_t *dbh, zval *driver_options) /* {{{ */
 {
-    return 1;
     pdo_taosw_db_handle *H;
     size_t i;
     int ret = 0;
@@ -392,43 +383,29 @@ static int pdo_taosw_handle_factory(pdo_dbh_t *dbh, zval *driver_options) /* {{{
         taos_options(TSDB_OPTION_TIMEZONE, timezone);
     }
 
-    taos_init();
-    /*
     swoole::coroutine::async([&]() {
+        taos_init();
         H->server = taos_connect(host, dbh->username, dbh->password, dbname, port);
 
         if (H->server == NULL) {
             zend_throw_exception_ex(NULL, 0, "SQLSTATE[%s] [%s] %s", "HY000", "0x000B", "Unable to establish connection");
-//            goto cleanup;
             for (i = 0; i < sizeof(vars) / sizeof(vars[0]); i++) {
                 if (vars[i].freeme) {
                     efree(vars[i].optval);
                 }
             }
+            taos_handle_closer(dbh);
+        } else {
+            taos_inited = 1;
+            H->attached = 1;
+
             dbh->methods = &taos_methods;
-            if (!ret) {
-                taos_handle_closer(dbh);
-            }
+            dbh->alloc_own_columns = 1;
+            dbh->max_escaped_char_length = 2;
+
+            ret = 1;
         }
     });
-    */
-
-    H->server = taos_connect(host, dbh->username, dbh->password, dbname, port);
-
-    if (H->server == NULL) {
-        zend_throw_exception_ex(NULL, 0, "SQLSTATE[%s] [%s] %s", "HY000", "0x000B", "Unable to establish connection");
-//        goto cleanup;
-    }
-
-    taos_inited = 1;
-
-    H->attached = 1;
-
-    dbh->methods = &taos_methods;
-    dbh->alloc_own_columns = 1;
-    dbh->max_escaped_char_length = 2;
-
-    ret = 1;
 
     return ret;
 }
