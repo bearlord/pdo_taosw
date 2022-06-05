@@ -134,18 +134,6 @@ static int pdo_taosw_stmt_execute(pdo_stmt_t *stmt)
         S->result = NULL;
     }
 
-//    if (swoole::Coroutine::get_current())
-//    {
-        printf("====1\n");
-//        swoole::coroutine::async([&]() {
-//            S->result = taos_query(H->server, stmt->active_query_string);
-//
-//            stmt->row_count = (zend_long) taos_affected_rows(S->result);
-//            stmt->column_count = (int) taos_num_fields(S->result);
-//            S->fields = taos_fetch_fields(S->result);
-//        });
-//    }
-
     S->result = taos_query(H->server, stmt->active_query_string);
 
     stmt->row_count = (zend_long) taos_affected_rows(S->result);
