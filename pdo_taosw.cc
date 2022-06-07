@@ -4,6 +4,9 @@
 # include "config.h"
 #endif
 
+#include <thread>
+#include <signal.h>
+
 extern "C" {
     #include "php.h"
     #include "php_ini.h"
@@ -22,6 +25,15 @@ int taos_inited = 0;
  */
 PHP_MINIT_FUNCTION(pdo_taosw)
 {
+    if (!taos_inited) {
+        std::thread([]() {
+            sigset_t mask;
+            sigfillset(&mask);
+            pthread_sigmask(SIG_BLOCK, &mask, nullptr);
+            taos_init();
+        }).join();
+        taos_inited = 1;
+    }
     php_pdo_register_driver(&pdo_taosw_driver);
 
     REGISTER_PDO_CLASS_CONST_LONG("PARAM_TAOSW_NULL",  (zend_long)(TSDB_DATA_TYPE_NULL + 6000));
