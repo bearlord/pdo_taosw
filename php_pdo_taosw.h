@@ -6,7 +6,7 @@
 extern zend_module_entry pdo_taosw_module_entry;
 # define phpext_pdo_taosw_ptr &pdo_taosw_module_entry
 
-extern int taos_inited;
+extern int taosw_inited;
 
 # define PHP_PDO_TAOSW_VERSION "0.1.0"
 

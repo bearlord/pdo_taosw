@@ -19,20 +19,20 @@ extern "C" {
 
 #include "swoole_coroutine.h"
 
-int taos_inited = 0;
+int taosw_inited = 0;
 
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(pdo_taosw)
 {
-    if (!taos_inited) {
+    if (!taosw_inited) {
         std::thread([]() {
             sigset_t mask;
             sigfillset(&mask);
             pthread_sigmask(SIG_BLOCK, &mask, nullptr);
             taos_init();
         }).join();
-        taos_inited = 1;
+        taosw_inited = 1;
     }
     php_pdo_register_driver(&pdo_taosw_driver);
 
@@ -60,9 +60,9 @@ PHP_MINIT_FUNCTION(pdo_taosw)
  */
 PHP_MSHUTDOWN_FUNCTION(pdo_taosw)
 {
-    if (taos_inited) {
+    if (taosw_inited) {
         taos_cleanup();
-        taos_inited = 0;
+        taosw_inited = 0;
     }
     php_pdo_unregister_driver(&pdo_taosw_driver);
     return SUCCESS;

@@ -390,7 +390,7 @@ static int pdo_taosw_handle_factory(pdo_dbh_t *dbh, zval *driver_options) /* {{{
             }
             taos_handle_closer(dbh);
         } else {
-            taos_inited = 1;
+            taosw_inited = 1;
             H->attached = 1;
 
             dbh->methods = &taos_methods;
