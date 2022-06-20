@@ -74,9 +74,9 @@ PHP_MSHUTDOWN_FUNCTION(pdo_taosw)
 PHP_MINFO_FUNCTION(pdo_taosw)
 {
 	php_info_print_table_start();
-	php_info_print_table_header(2, "pdo_taosw support", "enabled");
+	php_info_print_table_header(2, "PDO Driver for TAOS, With Swoole Support", "enabled");
 
-    php_info_print_table_row(2, "Module version", pdo_taosw_module_entry.version);
+    php_info_print_table_row(2, "TDengine(libtaos) Version ", taos_get_client_info());
 	php_info_print_table_end();
 }
 /* }}} */
