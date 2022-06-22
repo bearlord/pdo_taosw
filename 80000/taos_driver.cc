@@ -2,20 +2,7 @@
 #include "config.h"
 #endif
 
-#include "php.h"
-#include "php_ini.h"
-#include "ext/standard/info.h"
-#include "ext/standard/php_string.h"
-#include "main/php_network.h"
-#include "pdo/php_pdo.h"
-#include "pdo/php_pdo_driver.h"
-#include "pdo/php_pdo_error.h"
-#include "ext/standard/file.h"
-#include "php_pdo_taos.h"
-#include "php_pdo_taosw_int.h"
-#include "zend_exceptions.h"
-
-/* {{{ */
+/* {{{ _pdo_taosw_error */
 int _pdo_taosw_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, int errcode, const char *sqlstate, const char *msg, const char *file, int line)
 {
     pdo_taosw_db_handle *H = (pdo_taosw_db_handle *) dbh->driver_data;
@@ -83,8 +70,8 @@ static int pdo_taosw_fetch_error_func(pdo_dbh_t *dbh, pdo_stmt_t *stmt, zval *in
 }
 /* }}} */
 
-/* {{{ taos_handle_closer */
-static int taos_handle_closer(pdo_dbh_t *dbh) /* {{{ */
+/* {{{ taosw_handle_closer */
+static int taosw_handle_closer(pdo_dbh_t *dbh) /* {{{ */
 {
     pdo_taosw_db_handle *H = (pdo_taosw_db_handle *) dbh->driver_data;
     if (H) {
@@ -103,9 +90,9 @@ static int taos_handle_closer(pdo_dbh_t *dbh) /* {{{ */
 }
 /* }}} */
 
-/* {{{ taos_handle_preparer */
+/* {{{ taosw_handle_preparer */
 static int
-taos_handle_preparer(pdo_dbh_t *dbh, const char *sql, size_t sql_len, pdo_stmt_t *stmt, zval *driver_options)
+taosw_handle_preparer(pdo_dbh_t *dbh, const char *sql, size_t sql_len, pdo_stmt_t *stmt, zval *driver_options)
 {
     pdo_taosw_db_handle *H = (pdo_taosw_db_handle *) dbh->driver_data;
     pdo_taosw_stmt *S = ecalloc(1, sizeof(pdo_taosw_stmt));
@@ -166,8 +153,8 @@ taos_handle_preparer(pdo_dbh_t *dbh, const char *sql, size_t sql_len, pdo_stmt_t
 }
 /* }}} */
 
-/* {{{ taos_handle_doer */
-static zend_long taos_handle_doer(pdo_dbh_t *dbh, const char *sql, size_t sql_len)
+/* {{{ taosw_handle_doer */
+static zend_long taosw_handle_doer(pdo_dbh_t *dbh, const char *sql, size_t sql_len)
 {
     pdo_taosw_db_handle *H = (pdo_taosw_db_handle *) dbh->driver_data;
     TAOS_RES *res;
@@ -194,9 +181,9 @@ static zend_long taos_handle_doer(pdo_dbh_t *dbh, const char *sql, size_t sql_le
 }
 /* }}} */
 
-/* {{{ taos_handle_quoter */
+/* {{{ taosw_handle_quoter */
 static int
-taos_handle_quoter(pdo_dbh_t *dbh, const char *unquoted, size_t unquotedlen, char **quoted, size_t *quotedlen, enum pdo_param_type paramtype)
+taosw_handle_quoter(pdo_dbh_t *dbh, const char *unquoted, size_t unquotedlen, char **quoted, size_t *quotedlen, enum pdo_param_type paramtype)
 {
     int qcount = 0;
     char const *cu, *l, *r;
@@ -230,14 +217,16 @@ taos_handle_quoter(pdo_dbh_t *dbh, const char *unquoted, size_t unquotedlen, cha
 
     return 1;
 }
-
 /* }}} */
 
+/* {{{ pdo_taosw_last_insert_id */
 static char *pdo_taosw_last_insert_id(pdo_dbh_t *dbh, const char *name, size_t *len)
 {
     return NULL;
 }
+/* }}} */
 
+/* {{{ pdo_taosw_get_attribute */
 static int pdo_taosw_get_attribute(pdo_dbh_t *dbh, zend_long attr, zval *return_value)
 {
     pdo_taosw_db_handle *H = (pdo_taosw_db_handle *) dbh->driver_data;
@@ -257,40 +246,50 @@ static int pdo_taosw_get_attribute(pdo_dbh_t *dbh, zend_long attr, zval *return_
 
     return 1;
 }
+/* }}} */
 
-/* {{{ */
+/* {{{ pdo_taosw_check_liveness */
 static int pdo_taosw_check_liveness(pdo_dbh_t *dbh)
 {
     return SUCCESS;
 }
-
 /* }}} */
 
-static int taos_handle_in_transaction(pdo_dbh_t *dbh)
+/* {{{ taosw_handle_in_transaction */
+static int taosw_handle_in_transaction(pdo_dbh_t *dbh)
 {
     return 1;
 }
+/* }}} */
 
-static int taos_handle_begin(pdo_dbh_t *dbh)
+/* {{{ taosw_handle_begin */
+static int taosw_handle_begin(pdo_dbh_t *dbh)
 {
     return 1;
 }
+/* }}} */
 
-static int taos_handle_commit(pdo_dbh_t *dbh)
+/* {{{ taosw_handle_commit */
+static int taosw_handle_commit(pdo_dbh_t *dbh)
 {
     return 1;
 }
+/* }}} */
 
-static int taos_handle_rollback(pdo_dbh_t *dbh)
+/* {{{ taosw_handle_rollback */
+static int taosw_handle_rollback(pdo_dbh_t *dbh)
 {
     return 1;
 }
+/* }}} */
 
-
+/* {{{ dbh_methods */
 static const zend_function_entry dbh_methods[] = {
         PHP_FE_END
 };
+/* }}} */
 
+/* {{{ pdo_taosw_get_driver_methods */
 static const zend_function_entry *pdo_taosw_get_driver_methods(pdo_dbh_t *dbh, int kind)
 {
     switch (kind) {
@@ -300,6 +299,7 @@ static const zend_function_entry *pdo_taosw_get_driver_methods(pdo_dbh_t *dbh, i
             return NULL;
     }
 }
+/* }}} */
 
 /* {{{ pdo_taosw_set_attr */
 static int pdo_taosw_set_attr(pdo_dbh_t *dbh, zend_long attr, zval *val)
@@ -316,15 +316,14 @@ static int pdo_taosw_set_attr(pdo_dbh_t *dbh, zend_long attr, zval *val)
             return 0;
     }
 }
-
 /* }}} */
 
-
-static const struct pdo_dbh_methods taos_methods = {
-        taos_handle_closer,
-        taos_handle_preparer,
-        taos_handle_doer,
-        taos_handle_quoter,
+/* {{{ taosw_methods */
+static const struct pdo_dbh_methods taosw_methods = {
+        taosw_handle_closer,
+        taosw_handle_preparer,
+        taosw_handle_doer,
+        taosw_handle_quoter,
         NULL, /* handle begin */
         NULL, /* handle commit */
         NULL, /* handle rollback */
@@ -335,8 +334,9 @@ static const struct pdo_dbh_methods taos_methods = {
         NULL,    /* check_liveness */
         pdo_taosw_get_driver_methods,  /* get_driver_methods */
         NULL,
-        taos_handle_in_transaction, /* in_transaction */
+        taosw_handle_in_transaction, /* in_transaction */
 };
+/* {{{ */
 
 
 /* {{{ pdo_taosw_handle_factory */
@@ -400,7 +400,7 @@ static int pdo_taosw_handle_factory(pdo_dbh_t *dbh, zval *driver_options) /* {{{
 
     H->attached = 1;
 
-    dbh->methods = &taos_methods;
+    dbh->methods = &taosw_methods;
     dbh->alloc_own_columns = 1;
     dbh->max_escaped_char_length = 2;
 
@@ -413,14 +413,13 @@ cleanup:
         }
     }
 
-    dbh->methods = &taos_methods;
+    dbh->methods = &taosw_methods;
     if (!ret) {
-        taos_handle_closer(dbh);
+        taosw_handle_closer(dbh);
     }
 
     return ret;
 }
-
 /* }}} */
 
 const pdo_driver_t pdo_taosw_driver = {

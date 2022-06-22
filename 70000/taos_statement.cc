@@ -2,21 +2,11 @@
 #include "config.h"
 #endif
 
-#include "php.h"
-#include "php_ini.h"
-#include "ext/standard/info.h"
-#include "pdo/php_pdo.h"
-#include "pdo/php_pdo_driver.h"
-#include "php_pdo_taos.h"
-#include "php_pdo_taosw_int.h"
-#include "ttype.h"
-
 #if HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
 
-/* }}} */
-
+/* {{{ pdo_pdo_taosw_stmt_execute_prepared */
 static int pdo_pdo_taosw_stmt_execute_prepared(pdo_stmt_t *stmt) /* {{{ */
 {
     pdo_taosw_stmt *S = stmt->driver_data;
@@ -82,9 +72,9 @@ static int pdo_pdo_taosw_stmt_execute_prepared(pdo_stmt_t *stmt) /* {{{ */
 
     return 1;
 }
-
 /* }}} */
 
+/* {{{ pdo_taosw_stmt_dtor */
 static int pdo_taosw_stmt_dtor(pdo_stmt_t *stmt)
 {
     pdo_taosw_stmt *S = (pdo_taosw_stmt *) stmt->driver_data;
@@ -131,7 +121,9 @@ static int pdo_taosw_stmt_dtor(pdo_stmt_t *stmt)
 
     return 1;
 }
+/* }}} */
 
+/* {{{ pdo_taosw_stmt_execute */
 static int pdo_taosw_stmt_execute(pdo_stmt_t *stmt)
 {
     pdo_taosw_stmt *S = (pdo_taosw_stmt *) stmt->driver_data;
@@ -155,7 +147,9 @@ static int pdo_taosw_stmt_execute(pdo_stmt_t *stmt)
 
     return 1;
 }
+/* }}} */
 
+/* {{{ pdo_param_event_names */
 static const char *const pdo_param_event_names[] =
 {
     "PDO_PARAM_EVT_ALLOC",
@@ -166,7 +160,9 @@ static const char *const pdo_param_event_names[] =
     "PDO_PARAM_EVT_FETCH_POST",
     "PDO_PARAM_EVT_NORMALIZE"
 };
+/* }}} */
 
+/* {{{ pdo_taosw_stmt_param_hook */
 static int pdo_taosw_stmt_param_hook(pdo_stmt_t *stmt, struct pdo_bound_param_data *param, enum pdo_param_event event_type)
 {
     zval *parameter;
@@ -316,7 +312,9 @@ static int pdo_taosw_stmt_param_hook(pdo_stmt_t *stmt, struct pdo_bound_param_da
 
     return 1;
 }
+/* }}} */
 
+/* {{{ pdo_taosw_stmt_fetch */
 static int pdo_taosw_stmt_fetch(pdo_stmt_t *stmt, enum pdo_fetch_orientation ori, long offset)
 {
     pdo_taosw_stmt *S = (pdo_taosw_stmt *) stmt->driver_data;
@@ -335,7 +333,9 @@ static int pdo_taosw_stmt_fetch(pdo_stmt_t *stmt, enum pdo_fetch_orientation ori
 
     return 1;
 }
+/* }}} */
 
+/* {{{ pdo_taosw_stmt_describe */
 static int pdo_taosw_stmt_describe(pdo_stmt_t *stmt, int colno)
 {
     pdo_taosw_stmt *S = (pdo_taosw_stmt *) stmt->driver_data;
@@ -366,7 +366,9 @@ static int pdo_taosw_stmt_describe(pdo_stmt_t *stmt, int colno)
     }
     return 1;
 }
+/* }}} */
 
+/* {{{ pdo_taosw_stmt_get_col */
 static int pdo_taosw_stmt_get_col(pdo_stmt_t *stmt, int colno, char **ptr, unsigned long *len, int *caller_frees)
 {
     pdo_taosw_stmt *S = (pdo_taosw_stmt *) stmt->driver_data;
@@ -512,7 +514,9 @@ static int pdo_taosw_stmt_get_col(pdo_stmt_t *stmt, int colno, char **ptr, unsig
 
     return 1;
 }
+/* }}} */
 
+/* {{{ pdo_taosw_stmt_get_column_meta */
 static int pdo_taosw_stmt_get_column_meta(pdo_stmt_t *stmt, long colno, zval *return_value)
 {
     pdo_taosw_stmt *S = (pdo_taosw_stmt *) stmt->driver_data;
@@ -535,11 +539,14 @@ static int pdo_taosw_stmt_get_column_meta(pdo_stmt_t *stmt, long colno, zval *re
 
     return SUCCESS;
 }
+/* }}} */
 
+/* {{{ pdo_taosw_stmt_cursor_closer */
 static int pdo_taosw_stmt_cursor_closer(pdo_stmt_t *stmt)
 {
     return 1;
 }
+/* }}} */
 
 struct pdo_stmt_methods taosw_stmt_methods = {
     pdo_taosw_stmt_dtor,             /* free the statement handle */
