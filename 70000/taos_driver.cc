@@ -387,34 +387,29 @@ static int pdo_taosw_handle_factory(pdo_dbh_t *dbh, zval *driver_options)
         taos_options(TSDB_OPTION_TIMEZONE, timezone);
     }
 
-    taos_init();
-    H->server = taos_connect(host, dbh->username, dbh->password, dbname, port);
+    swoole::coroutine::async([&]() {
+        taos_init();
+        H->server = taos_connect(host, dbh->username, dbh->password, dbname, port);
 
-    if (H->server == NULL) {
-        zend_throw_exception_ex(NULL, 0, "SQLSTATE[%s] [%s] %s", "HY000", "0x000B", "Unable to establish connection");
-        goto cleanup;
-    }
-    taosw_inited = 1;
+        if (H->server == NULL) {
+            zend_throw_exception_ex(NULL, 0, "SQLSTATE[%s] [%s] %s", "HY000", "0x000B", "Unable to establish connection");
+            for (i = 0; i < sizeof(vars) / sizeof(vars[0]); i++) {
+                if (vars[i].freeme) {
+                    efree(vars[i].optval);
+                }
+            }
+            taosw_handle_closer(dbh);
+        } else {
+            taosw_inited = 1;
+            H->attached = 1;
 
-    H->attached = 1;
+            dbh->methods = &taosw_methods;
+            dbh->alloc_own_columns = 1;
+            dbh->max_escaped_char_length = 2;
 
-    dbh->methods = &taosw_methods;
-    dbh->alloc_own_columns = 1;
-    dbh->max_escaped_char_length = 2;
-
-    ret = 1;
-
-cleanup:
-    for (i = 0; i < sizeof(vars) / sizeof(vars[0]); i++) {
-        if (vars[i].freeme) {
-            efree(vars[i].optval);
+            ret = 1;
         }
-    }
-
-    dbh->methods = &taosw_methods;
-    if (!ret) {
-        taosw_handle_closer(dbh);
-    }
+    });
 
     return ret;
 }

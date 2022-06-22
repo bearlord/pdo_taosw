@@ -145,6 +145,7 @@ static int pdo_taosw_stmt_execute(pdo_stmt_t *stmt)
         stmt->column_count = (int) taos_num_fields(S->result);
         S->fields = taos_fetch_fields(S->result);
     });
+
     return 1;
 }
 /* }}} */
@@ -331,6 +332,7 @@ static int pdo_taosw_stmt_fetch(pdo_stmt_t *stmt, enum pdo_fetch_orientation ori
             ret = 0;
         }
     });
+
     return ret;
 }
 /* }}} */

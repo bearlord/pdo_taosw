@@ -129,21 +129,26 @@ static int pdo_taosw_stmt_execute(pdo_stmt_t *stmt)
     pdo_taosw_stmt *S = (pdo_taosw_stmt *) stmt->driver_data;
     pdo_taosw_db_handle *H = S->H;
 
-    //to be modified
+    int ret;
     if (S->stmt) {
-        return pdo_pdo_taosw_stmt_execute_prepared(stmt);
+        swoole::coroutine::async([&]() {
+            ret = pdo_pdo_taosw_stmt_execute_prepared(stmt);
+        });
+        return ret;
     }
 
-    if (S->result) {
-        taos_free_result(S->result);
-        S->result = NULL;
-    }
+    swoole::coroutine::async([&]() {
+        if (S->result) {
+            taos_free_result(S->result);
+            S->result = NULL;
+        }
 
-    S->result = taos_query(H->server, stmt->active_query_string);
+        S->result = taos_query(H->server, stmt->active_query_string);
 
-    stmt->row_count = (zend_long) taos_affected_rows(S->result);
-    stmt->column_count = (int) taos_num_fields(S->result);
-    S->fields = taos_fetch_fields(S->result);
+        stmt->row_count = (zend_long) taos_affected_rows(S->result);
+        stmt->column_count = (int) taos_num_fields(S->result);
+        S->fields = taos_fetch_fields(S->result);
+    });
 
     return 1;
 }
@@ -325,13 +330,17 @@ static int pdo_taosw_stmt_fetch(pdo_stmt_t *stmt, enum pdo_fetch_orientation ori
         return 0;
     }
 
-    if ((S->current_data = taos_fetch_row(S->result)) == NULL) {
-        return 0;
-    }
+    int ret;
+    swoole::coroutine::async([&]() {
+        S->current_data = taos_fetch_row(S->result);
+        if (S->current_data) {
+            ret = 1;
+        } else {
+            ret = 0;
+        }
+    });
 
-    S->current_lengths = taos_fetch_lengths(S->result);
-
-    return 1;
+    return ret;
 }
 /* }}} */
 
