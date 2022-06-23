@@ -252,6 +252,7 @@ static int pdo_taosw_stmt_param_hook(pdo_stmt_t *stmt, struct pdo_bound_param_da
 
                     case TSDB_DATA_TYPE_BINARY + 6000:
                     case TSDB_DATA_TYPE_NCHAR + 6000:
+                    case TSDB_DATA_TYPE_JSON + 6000:
                         b->buffer_type = PDO_PARAM_TYPE(param->param_type) - 6000;
                         b->buffer = Z_STRVAL_P(parameter);
                         b->buffer_length = Z_STRLEN_P(parameter);
@@ -483,6 +484,9 @@ static int pdo_taosw_stmt_get_col(pdo_stmt_t *stmt, int colno, zval *result, enu
                 ZVAL_STRINGL_FAST(result, value, strlen(value));
                 break;
 
+#ifdef TSDB_DATA_TYPE_JSON
+            case TSDB_DATA_TYPE_JSON:
+#endif
             case TSDB_DATA_TYPE_BINARY:
             case TSDB_DATA_TYPE_NCHAR: {
                 int32_t charLen;
