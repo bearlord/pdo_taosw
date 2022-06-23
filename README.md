@@ -270,6 +270,7 @@ Please use the following custom PDO types:
 | PARAM_TAOSW_USMALLINT | TSDB_DATA_TYPE_USMALLINT | USMALLINT   |
 | PARAM_TAOSW_UINT      | TSDB_DATA_TYPE_UINT      | UINT        |
 | PARAM_TAOSW_UBIGINT   | TSDB_DATA_TYPE_UBIGINT   | UBIGINT     |
+| PARAM_TAOSW_JSON | TSDB_DATA_TYPE_JSON | JSON |
 
 Constants such as `TSDB_DATA_TYPE_INT` are partially equal the PDO predefined constants value, resulting in conflict when judging the data type, so the difference of `6000` is set artificially.
 

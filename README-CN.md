@@ -279,6 +279,7 @@ Coroutine::create(function () {
 | PARAM_TAOSW_USMALLINT | TSDB_DATA_TYPE_USMALLINT | USMALLINT |
 | PARAM_TAOSW_UINT      | TSDB_DATA_TYPE_UINT      | UINT      |
 | PARAM_TAOSW_UBIGINT   | TSDB_DATA_TYPE_UBIGINT   | UBIGINT   |
+| PARAM_TAOSW_JSON | TSDB_DATA_TYPE_JSON | JSON |
 
 `TSDB_DATA_TYPE_INT` 等常量，与 PDO 预定义常量的值 部分相等，导致判断数据类型时发生冲突，故人为设定 `6000` 的差值。例如：
 
