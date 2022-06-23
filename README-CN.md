@@ -21,6 +21,11 @@ TDengine是涛思数据专为物联网、车联网、工业互联网、IT运维�
 
 # 安装 PDO_TAOS
 
+### 安装需求
+
+- `php` version >= 7.2.0
+- `swoole` version >= 4.8.0
+
 ## 源码编译安装
 
 ```bash
@@ -66,7 +71,7 @@ CREATE DATABASE demo;
 ```php
 use Swoole\Coroutine;
 Coroutine::create(function () {
-	$dbh = new PDO("taos:host=127.0.0.1;dbname=demo", "root", "taosdata");
+	$dbh = new PDO("taosw:host=127.0.0.1;dbname=demo", "root", "taosdata");
 });
 ```
 
@@ -89,7 +94,7 @@ Coroutine::create(function () {
 ```php
 use Swoole\Coroutine;
 Coroutine::create(function () {
-    $dbh = new PDO("taos:host=127.0.0.1;dbname=demo", "root", "taosdata");
+    $dbh = new PDO("taosw:host=127.0.0.1;dbname=demo", "root", "taosdata");
 
     $sql = "create table device_log_1000 (
     created_timestamp TIMESTAMP,
@@ -151,7 +156,7 @@ taos>
 ```php
 use Swoole\Coroutine;
 Coroutine::create(function () {    
-    $dbh = new PDO("taos:host=127.0.0.1;dbname=demo", "root", "taosdata");
+    $dbh = new PDO("taosw:host=127.0.0.1;dbname=demo", "root", "taosdata");
 
     $sql = "INSERT INTO device_log_100 (
     created_timestamp,
@@ -200,7 +205,7 @@ Coroutine::create(function () {
 use Swoole\Coroutine;
 Coroutine::create(function () {
     try {
-        $dbh = new PDO("taos:host=127.0.0.1;dbname=demo", "root", "taosdata");
+        $dbh = new PDO("taosw:host=127.0.0.1;dbname=demo", "root", "taosdata");
 
         $sql = "INSERT INTO device_log_100 (created_timestamp, v_bool, v_tinyint, v_smallint, v_int, v_bigint, v_float, v_double, v_binary, v_nchar ) VALUES (
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -315,7 +320,7 @@ MySQL的字段类型是 `INT`, `SMALLINT`, `TINYINT`, `BIGINT`，绑定参数为
 ```php
 use Swoole\Coroutine;
 Coroutine::create(function () {
-    $dbh = new PDO("taos:host=127.0.0.1;dbname=demo", "root", "taosdata");
+    $dbh = new PDO("taosw:host=127.0.0.1;dbname=demo", "root", "taosdata");
 
     $t1 = strtotime("2022-01-27 16:36:12");
     $t2 = strtotime("2022-01-27 16:48:13");
@@ -418,7 +423,7 @@ array(3) {
 ```php
 use Swoole\Coroutine;
 Coroutine::create(function () {
-    $dbh = new PDO("taos:host=127.0.0.1;dbname=demo", "root", "taosdata");
+    $dbh = new PDO("taosw:host=127.0.0.1;dbname=demo", "root", "taosdata");
 
     $t1 = strtotime("2022-01-27 16:36:12");
     $t2 = strtotime("2022-01-27 16:48:13");
@@ -484,7 +489,7 @@ CREATE DATABASE demo UPDATE 1
 ```php
 use Swoole\Coroutine;
 Coroutine::create(function () {
-	$dbh = new PDO("taos:host=127.0.0.1", "root", "taosdata");
+	$dbh = new PDO("taosw:host=127.0.0.1", "root", "taosdata");
 });
 ```
 
@@ -504,7 +509,7 @@ Coroutine::create(function () {
 use Swoole\Coroutine;
 Coroutine::create(function () {    
     try {
-        $dbh = new PDO("taos:host=127.0.0.1", "root", "taosdata");
+        $dbh = new PDO("taosw:host=127.0.0.1", "root", "taosdata");
 
         $year = date("Y");
         $database = sprintf("demo_%s", $year);

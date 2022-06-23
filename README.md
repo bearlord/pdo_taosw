@@ -88,7 +88,7 @@ Example:
 ```php
 use Swoole\Coroutine;
 Coroutine::create(function () {
-    $dbh = new PDO("taos:host=127.0.0.1;dbname=demo", "root", "taosdata");
+    $dbh = new PDO("taosw:host=127.0.0.1;dbname=demo", "root", "taosdata");
 
     $sql = "create table device_log_1000 (
     created_timestamp TIMESTAMP,
@@ -148,7 +148,7 @@ taos>
 ```php
 use Swoole\Coroutine;
 Coroutine::create(function () {
-    $dbh = new PDO("taos:host=127.0.0.1;dbname=demo", "root", "taosdata");
+    $dbh = new PDO("taosw:host=127.0.0.1;dbname=demo", "root", "taosdata");
 
     $sql = "INSERT INTO device_log_100 (
     created_timestamp,
@@ -197,7 +197,7 @@ Be sure to call the `exec` method, not the `query` method.
 use Swoole\Coroutine;
 Coroutine::create(function () {
     try {
-        $dbh = new PDO("taos:host=127.0.0.1;dbname=demo", "root", "taosdata");
+        $dbh = new PDO("taosw:host=127.0.0.1;dbname=demo", "root", "taosdata");
 
         $sql = "INSERT INTO device_log_100 (created_timestamp, v_bool, v_tinyint, v_smallint, v_int, v_bigint, v_float, v_double, v_binary, v_nchar ) VALUES (
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -307,7 +307,7 @@ Two ways to query data:
 ```php
 use Swoole\Coroutine;
 Coroutine::create(function () {
-    $dbh = new PDO("taos:host=127.0.0.1;dbname=demo", "root", "taosdata");
+    $dbh = new PDO("taosw:host=127.0.0.1;dbname=demo", "root", "taosdata");
 
     $t1 = strtotime("2022-01-27 16:36:12");
     $t2 = strtotime("2022-01-27 16:48:13");
@@ -408,7 +408,7 @@ Note: `created_timestamp` uses the `timestamp` type when querying, but the query
 ```php
 use Swoole\Coroutine;
 Coroutine::create(function () {
-    $dbh = new PDO("taos:host=127.0.0.1;dbname=demo", "root", "taosdata");
+    $dbh = new PDO("taosw:host=127.0.0.1;dbname=demo", "root", "taosdata");
 
     $t1 = strtotime("2022-01-27 16:36:12");
     $t2 = strtotime("2022-01-27 16:48:13");
@@ -476,7 +476,7 @@ For example:
 ```php
 use Swoole\Coroutine;
 Coroutine::create(function () {    
-	$dbh = new PDO("taos:host=127.0.0.1", "root", "taosdata");
+	$dbh = new PDO("taosw:host=127.0.0.1", "root", "taosdata");
 });
 ```
 
@@ -496,7 +496,7 @@ Example：
 use Swoole\Coroutine;
 Coroutine::create(function () {
     try {
-        $dbh = new PDO("taos:host=127.0.0.1", "root", "taosdata");
+        $dbh = new PDO("taosw:host=127.0.0.1", "root", "taosdata");
 
         $year = date("Y");
         $database = sprintf("demo_%s", $year);
