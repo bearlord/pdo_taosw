@@ -25,15 +25,6 @@ int taosw_inited = 0;
  */
 PHP_MINIT_FUNCTION(pdo_taosw)
 {
-//    if (!taosw_inited) {
-//        std::thread([]() {
-//            sigset_t mask;
-//            sigfillset(&mask);
-//            pthread_sigmask(SIG_BLOCK, &mask, nullptr);
-//            taos_init();
-//        }).join();
-//        taosw_inited = 1;
-//    }
     php_pdo_register_driver(&pdo_taosw_driver);
 
     REGISTER_PDO_CLASS_CONST_LONG("PARAM_TAOSW_NULL",  (zend_long)(TSDB_DATA_TYPE_NULL + 6000));
@@ -51,6 +42,7 @@ PHP_MINIT_FUNCTION(pdo_taosw)
     REGISTER_PDO_CLASS_CONST_LONG("PARAM_TAOSW_USMALLINT",  (zend_long)(TSDB_DATA_TYPE_USMALLINT + 6000));
     REGISTER_PDO_CLASS_CONST_LONG("PARAM_TAOSW_UINT",  (zend_long)(TSDB_DATA_TYPE_UINT + 6000));
     REGISTER_PDO_CLASS_CONST_LONG("PARAM_TAOSW_UBIGINT",  (zend_long)(TSDB_DATA_TYPE_UBIGINT + 6000));
+    REGISTER_PDO_CLASS_CONST_LONG("PARAM_TAOS_JSON",  (zend_long)(TSDB_DATA_TYPE_JSON + 6000));
 
     return SUCCESS;
 }
