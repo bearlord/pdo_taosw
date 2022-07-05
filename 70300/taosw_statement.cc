@@ -393,6 +393,10 @@ static int pdo_taosw_stmt_get_col(pdo_stmt_t *stmt, int colno, char **ptr, unsig
         char value[S->out_length[colno]];
         TAOS_ROW row = S->current_data;
 
+        if (!row[colno]) {
+            return 1;
+        }
+
         switch (S->fields[colno].type) {
             case TSDB_DATA_TYPE_NULL:
                 break;
@@ -463,7 +467,7 @@ static int pdo_taosw_stmt_get_col(pdo_stmt_t *stmt, int colno, char **ptr, unsig
                 time_t tt;
                 struct tm *tp;
                 char time_str[30] = {0};
-                char time_value[30] = {0};
+                char time_value[50] = {0};
 
                 precision = taos_result_precision(S->result);
                 if (precision == TSDB_TIME_PRECISION_MILLI) {
@@ -476,11 +480,11 @@ static int pdo_taosw_stmt_get_col(pdo_stmt_t *stmt, int colno, char **ptr, unsig
                 tp = localtime(&tt);
                 strftime(time_str, 64, "%Y-%m-%d %H:%M:%S", tp);
                 if (precision == TSDB_TIME_PRECISION_MILLI) {
-                    sprintf(time_value, "%s.%03ld", time_str, (int64_t)(*((int64_t *) row[colno]) % 1000));
+                    sprintf(time_value, "%s.%03d", time_str, (int64_t)(*((int64_t *) row[colno]) % 1000));
                 } else if (precision == TSDB_TIME_PRECISION_MICRO) {
-                    sprintf(time_value, "%s.%06ld", time_str, (int64_t)(*((int64_t *) row[colno]) % 1000000));
+                    sprintf(time_value, "%s.%06d", time_str, (int64_t)(*((int64_t *) row[colno]) % 1000000));
                 } else {
-                    sprintf(time_value, "%s.%09ld", time_str, (int64_t)(*((int64_t *) row[colno]) % 1000000000));
+                    sprintf(time_value, "%s.%09d", time_str, (int64_t)(*((int64_t *) row[colno]) % 1000000000));
                 }
                 *ptr = time_value;
                 *len = strlen(time_value);

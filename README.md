@@ -531,7 +531,7 @@ Coroutine::create(function () {
         $result = $sth->execute();
         var_dump($result);
 
-        $rowCount = $sth->rowCount()
+        $rowCount = $sth->rowCount();
         var_dump($rowCount);
     } catch (Exception $e) {
         printf("%d, %s\n", $e->getCode(), $e->getMessage());
