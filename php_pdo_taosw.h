@@ -8,7 +8,7 @@ extern zend_module_entry pdo_taosw_module_entry;
 
 extern int taosw_inited;
 
-# define PHP_PDO_TAOSW_VERSION "0.1.0"
+# define PHP_PDO_TAOSW_VERSION "0.3.0"
 
 # if defined(ZTS) && defined(COMPILE_DL_PDO_TAOSW)
 ZEND_TSRMLS_CACHE_EXTERN()

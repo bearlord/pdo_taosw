@@ -23,7 +23,7 @@ static int pdo_pdo_taosw_stmt_execute_prepared(pdo_stmt_t *stmt) /* {{{ */
     }
 
     if (S->params) {
-        memset(S->params, 0, S->num_params * sizeof(TAOS_BIND));
+        memset(S->params, 0, S->num_params * sizeof(TAOS_MULTI_BIND));
     }
 
     int code = taos_stmt_execute(S->stmt);
@@ -49,7 +49,7 @@ static int pdo_pdo_taosw_stmt_execute_prepared(pdo_stmt_t *stmt) /* {{{ */
                 efree(S->out_null);
                 efree(S->out_length);
             }
-            S->bound_result = (TAOS_BIND *) ecalloc(stmt->column_count, sizeof(TAOS_BIND));
+            S->bound_result = (TAOS_MULTI_BIND *) ecalloc(stmt->column_count, sizeof(TAOS_MULTI_BIND));
             S->out_null = (int *) ecalloc(stmt->column_count, sizeof(zend_bool));
             S->out_length = (zend_ulong *) ecalloc(stmt->column_count, sizeof(zend_ulong));
 
@@ -60,9 +60,10 @@ static int pdo_pdo_taosw_stmt_execute_prepared(pdo_stmt_t *stmt) /* {{{ */
                 S->out_length[i] = S->bound_result[i].buffer_length;
 
                 S->bound_result[i].buffer = emalloc(S->bound_result[i].buffer_length);
-                S->bound_result[i].is_null = &S->out_null[i];
-                S->bound_result[i].length = &S->out_length[i];
+                S->bound_result[i].is_null = (char *) &S->out_null[i];
+                S->bound_result[i].length = (int32_t *) &S->out_length[i];
                 S->bound_result[i].buffer_type = TSDB_DATA_TYPE_BINARY;
+                S->bound_result[i].num = 1;
             }
         }
     }
@@ -166,7 +167,7 @@ static const char *const pdo_param_event_names[] =
 static int pdo_taosw_stmt_param_hook(pdo_stmt_t *stmt, struct pdo_bound_param_data *param, enum pdo_param_event event_type)
 {
     zval *parameter;
-    TAOS_BIND *b;
+    TAOS_MULTI_BIND *b;
     pdo_taosw_stmt *S = (pdo_taosw_stmt *) stmt->driver_data;
 
     if (S->stmt && param->is_param) {
@@ -181,8 +182,9 @@ static int pdo_taosw_stmt_param_hook(pdo_stmt_t *stmt, struct pdo_bound_param_da
 
                 b = &S->params[param->paramno];
                 param->driver_data = b;
-                b->is_null = &S->in_null[param->paramno];
-                b->length = &S->in_length[param->paramno];
+                b->is_null = (char *) &S->in_null[param->paramno];
+                b->length = (int32_t *) &S->in_length[param->paramno];
+                b->num = 1;
 
                 return 1;
 
@@ -480,11 +482,11 @@ static int pdo_taosw_stmt_get_col(pdo_stmt_t *stmt, int colno, char **ptr, unsig
                 tp = localtime(&tt);
                 strftime(time_str, 64, "%Y-%m-%d %H:%M:%S", tp);
                 if (precision == TSDB_TIME_PRECISION_MILLI) {
-                    sprintf(time_value, "%s.%03d", time_str, (int64_t)(*((int64_t *) row[colno]) % 1000));
+                    sprintf(time_value, "%s.%03d", time_str, (int32_t)(*((int64_t *) row[colno]) % 1000));
                 } else if (precision == TSDB_TIME_PRECISION_MICRO) {
-                    sprintf(time_value, "%s.%06d", time_str, (int64_t)(*((int64_t *) row[colno]) % 1000000));
+                    sprintf(time_value, "%s.%06d", time_str, (int32_t)(*((int64_t *) row[colno]) % 1000000));
                 } else {
-                    sprintf(time_value, "%s.%09d", time_str, (int64_t)(*((int64_t *) row[colno]) % 1000000000));
+                    sprintf(time_value, "%s.%09d", time_str, (int32_t)(*((int64_t *) row[colno]) % 1000000000));
                 }
                 *ptr = time_value;
                 *len = strlen(time_value);
